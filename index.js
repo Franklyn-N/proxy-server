@@ -1,7 +1,7 @@
 require("dotenv").config({ path: __dirname + "/.env" })
 const fs = require("fs")
 const tls = require('tls')
-const https = require('https')
+const http = require('http')
 const express = require("express")
 const cors = require("cors")
 const helmet = require('helmet')
@@ -10,15 +10,14 @@ const HttpProxyRules = require('http-proxy-rules');
 
 const app = express()
 
-const frontend_url = process.env.FRONTEND_URL || "https://skillup-community.netlify.app"
+const frontend_url = process.env.FRONTEND_URL;
 
-// const options = {
-//     key: fs.readFileSync('key.pem'),
-//     cert: fs.readFileSync("cert.pem"),
-//     passphrase: "myforumsshkey"
-// };
+const options = {
+    key: fs.readFileSync('key.pem'),
+    cert: fs.readFileSync("cert.pem"),
+};
 
-const server = https.createServer(app) // initialize server here
+const server = http.createServer(options, app) // initialize server here
 
 const io = require("socket.io")(server, { cors: { origin: "*" } }) // io can now access server
 
@@ -32,14 +31,14 @@ server.listen(PORT, () => console.log("Listening on port %d", PORT))
 
 const proxyRules = new HttpProxyRules({
     rules: {
-        '.*/events/*': `${frontend_url}/events`, // Rule (1) docs, about, etc
-        '.*/my-courses/*': `${frontend_url}/my-courses`,
-        '.*/opportunities/*': `${frontend_url}/opportunities`,
-        '.*/resource/*': `${frontend_url}/resource`,
-        '.*/library/*': `${frontend_url}/library`,
-        '.*/settings/*': `${frontend_url}/settings`,
-        '.*/blog/*': `${frontend_url}/blog`,
-        '.*/courses/*': `${frontend_url}/courses`,
+        '.*/events/*': `${frontend_url}`, // Rule (1) docs, about, etc
+        '.*/my-courses/*': `${frontend_url}`,
+        '.*/opportunities/*': `${frontend_url}`,
+        '.*/resource/*': `${frontend_url}`,
+        '.*/library/*': `${frontend_url}`,
+        '.*/settings/*': `${frontend_url}`,
+        '.*/blog/*': `${frontend_url}`,
+        '.*/courses/*': `${frontend_url}`,
 
         '.*/forum': 'http://localhost:4567/forum', // Rule (2) forums
         '.*/forum/*': 'http://localhost:4567/forum', 
@@ -49,6 +48,8 @@ const proxyRules = new HttpProxyRules({
     },
     default: `${frontend_url}` // default target, will be landing page
 });
+
+console.log(frontend_url)
 
 const proxy = httpProxy.createProxy();
 
@@ -75,9 +76,6 @@ app.get("/test", (req, res) => {
 })
 
 
-
-
-
 // Handle unhandled promise rejections and exceptions
 process.on('unhandledRejection', (err) => {
   console.log(err.message)
@@ -96,11 +94,3 @@ app.use((err, req, res, _next) => {
 app.use((err, res, next) => {
   return res.status(400).json({success:false, message: "route not found"})
 })
-
-
-
-
-
-
-
-
